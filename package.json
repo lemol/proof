@@ -1,0 +1,8 @@
+{
+  "name": "@lemol/proof",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Playwright scenario proof helper; bootstrap only",
+  "license": "MIT"
+}
