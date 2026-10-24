@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "scenarios": [
+    {
+      "id": "browse/open-task",
+      "outcome": "passed",
+      "steps": [
+        {
+          "action": "openBrowse",
+          "outcome": "passed",
+          "expected": "The task list is visible",
+          "screenshot": "scenario-001/step-001.webp",
+          "at": 1.25
+        },
+        {
+          "action": "openTask",
+          "outcome": "passed",
+          "screenshot": "scenario-001/step-002.webp",
+          "at": 2.5
+        }
+      ],
+      "video": "scenario-001/video.webm",
+      "chapters": "scenario-001/chapters.vtt",
+      "trace": "scenario-001/trace.zip"
+    }
+  ]
+}

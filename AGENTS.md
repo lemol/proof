@@ -6,7 +6,7 @@ standalone package, `@lemol/proof`.
 
 ## Read first
 
-- [README.md](README.md) is the public entry point. Task 1 makes it the
+- [README.md](README.md) is the public entry point and the
   complete specification of manifest version 1, with JSON examples.
 - [Task 1 design](docs/specs/proof-runner.md)
   records the approved package choices, API and module boundaries.
@@ -22,7 +22,7 @@ standalone package, `@lemol/proof`.
 - **Tool-independent manifest.** The JSON contract must be implementable
   and parseable without importing this package, Effect or Playwright.
   Update the README, decoder and example manifests together.
-- **Small boundaries.** The proposed `manifest` module is pure and imports
+- **Small boundaries.** The `manifest` module is pure and imports
   only `effect`; `runner` owns browser capture and filesystem effects and
   imports `manifest`. Internal imports use relative paths. No event store,
   service framework or CLI command tree is needed for task 1.

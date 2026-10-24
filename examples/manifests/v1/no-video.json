@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "scenarios": [
+    {
+      "id": "browse/no-video",
+      "outcome": "passed",
+      "steps": [
+        {
+          "action": "openBrowse",
+          "outcome": "passed",
+          "screenshot": "scenario-001/step-001.webp",
+          "at": 0.125
+        }
+      ],
+      "trace": "scenario-001/trace.zip"
+    }
+  ]
+}

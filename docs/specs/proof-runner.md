@@ -1,6 +1,6 @@
 # Task 1: proof runner and manifest version 1
 
-Status: approved. No runtime is implemented yet.
+Status: approved; implemented.
 Delivers: task 01, `A run shows its work`, epic step 1.
 
 This refines the approved project1 tech plan's §3, *The contract* and
@@ -146,7 +146,9 @@ A scenario is failed exactly when a recorded step failed. Its final step
 is the only failed one; later actions are absent. All scenarios have at
 least one step, and ids are unique. Exit 0 means every scenario passed;
 exit 1 means one or more failed. Exit 3 has a diagnostic and no manifest.
-Crashes exit with another code via the project script's uncaught rejection.
+Infrastructure failures reject. An uncaught rejection may also exit Bun with 1;
+readers distinguish it from a completed scenario failure by requiring a valid
+manifest. A project script may catch infrastructure errors and exit 2.
 
 Write `manifest.json` last, using a temporary file and rename, after
 decoding the assembled manifest and checking referenced artifacts. A

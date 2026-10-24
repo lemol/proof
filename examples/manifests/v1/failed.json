@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "scenarios": [
+    {
+      "id": "review/post",
+      "outcome": "failed",
+      "steps": [
+        {
+          "action": "postReview",
+          "outcome": "failed",
+          "expected": "The review appears in the run",
+          "error": "Expected review to be visible",
+          "screenshot": "scenario-001/step-001.webp",
+          "at": 1.5
+        }
+      ],
+      "video": "scenario-001/video.webm",
+      "chapters": "scenario-001/chapters.vtt",
+      "trace": "scenario-001/trace.zip"
+    }
+  ]
+}
