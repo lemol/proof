@@ -16,9 +16,6 @@ standalone package, `@lemol/proof`.
 
 ## Rules
 
-- **Standalone library.** No `workspace:*` dependencies, sibling imports,
-  or dependency on nzila or xonton. Keep a standalone `bun.lock` and CI.
-  Workspace composition belongs to the workspace repository.
 - **Tool-independent manifest.** The JSON contract must be implementable
   and parseable without importing this package, Effect or Playwright.
   Update the README, decoder and example manifests together.
@@ -34,9 +31,6 @@ standalone package, `@lemol/proof`.
 - **Tests are colocated.** `foo.test.ts` lives beside `foo.ts`; module fakes
   live in `testing.ts` when needed. Cross-module suites go under `test/`.
   Give browser tests isolated temporary directories and fixture servers.
-- **Style follows the sibling libraries.** Strict TypeScript, oxlint and
-  oxfmt; separate control flow and returns with blank lines. Carry the
-  lint configuration with this repository, never import a sibling's file.
 - **Verification.** Task 1 must add `bun run check` for lint, typecheck and
   unit tests, and `bun run check:all` including real-browser tests. CI runs
   the full gate; missing browsers cannot silently skip that tier.
@@ -44,9 +38,7 @@ standalone package, `@lemol/proof`.
   matching the lemol libraries (currently `4.0.0`). Change it deliberately
   with its consumers, never select `latest` independently.
 - **Design docs.** Keep durable specs in `docs/specs/` with descriptive,
-  undated filenames. Do not Git-track `docs/superpowers/` artifacts.
-- **Docs stay local.** Keep module details with the module. Do not copy
-  nzila's event-sourcing, adapter graph or surface-parity rules here.
+  undated filenames.
 
 ## Learning more about Effect
 
