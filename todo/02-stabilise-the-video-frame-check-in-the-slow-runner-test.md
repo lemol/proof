@@ -59,3 +59,11 @@ anything.
 - The other slow tests, the CI workflow, and browser provisioning.
 
 onboard:01M5QH93J6G5Q4KYV4BP26TC57:tasks/slow-video-frame-flake.md
+
+## Comments
+
+### @nzila at 2026-10-24 19:37:15 +00:00
+
+Abandoned by api: flow route gate-unrelated.abandon
+
+nzila run 01M5QJ2YGZKB1KK3Z8FP9N90HH
