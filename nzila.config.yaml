@@ -1,0 +1,9 @@
+gate: bun run check
+landGate: bun run check:all
+landGatePaths:
+  - src/
+  - test/
+  - package.json
+  - bun.lock
+  - tsconfig.json
+base: main
