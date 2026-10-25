@@ -1,12 +1,11 @@
 # Task 1: proof runner and manifest version 1
 
 Status: approved; implemented.
-Delivers: task 01, `A run shows its work`, epic step 1.
+Delivers: task 01, `A run shows its work`.
 
-This refines the approved project1 tech plan's §3, *The contract* and
-*The helper*. The package must replay project-owned scenarios, preserve
-what happened, and leave a format nzila can parse independently. It does
-not start the app, retry actions, compare pixels or publish packages.
+The package must replay project-owned scenarios, preserve what happened,
+and leave a format any consumer can parse independently. It does not
+start the app, retry actions, compare pixels or publish packages.
 
 ## Package choices
 
@@ -73,16 +72,16 @@ then run the remaining selected scenarios in fresh contexts.
 
 ## Inputs and deterministic capture
 
-Default inputs are `NZILA_PROVE_DIR` and newline-separated
-`NZILA_PROVE_SCENARIOS`; explicit options may override them for local use
+Default inputs are `PROOF_DIR` and newline-separated
+`PROOF_SCENARIOS`; explicit options may override them for local use
 and tests. Ignore blank selection lines, deduplicate ids in first-seen
 order, and reject an empty selection. Never silently run every scenario.
 Validate the entire selection before launching anything.
 
 Require an existing empty output directory. Artifact names use scenario
 and step ordinals, not untrusted ids. Never overwrite an earlier proof.
-`NZILA_PROVE_HEAD` belongs to the caller's record, not manifest v1;
-`NZILA_PROVE_CACHE` is available to the project's launch/provisioning code,
+`PROOF_HEAD` belongs to the caller's record, not manifest v1;
+`PROOF_CACHE` is available to the project's launch/provisioning code,
 but the helper does not interpret or populate it.
 
 Use fixed defaults for viewport (1280×800), locale (`en-US`), timezone
@@ -179,10 +178,7 @@ process tests. CI installs an explicit Chromium and the required video
 encoder, then runs `check:all`; browser absence fails this test tier.
 
 Validate installation and the full gate in an isolated standalone copy
-with its own lockfile. Keep the workspace's root as the composed install
-root. Add proof after ui and before nzila in the workspace verification
-order and update that repository's order tests; run composition checks
-after manifest changes. These are coordinated changes in separate repos.
+with its own lockfile.
 
 Release scope is a local `proof@0.1.0` tag after the full gate and contract
 review; no registry publication. Do not mark task 1 done before that proof

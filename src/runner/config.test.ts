@@ -29,13 +29,23 @@ test("validates action definitions before launch", () => {
   ).toThrow()
 })
 
+test("reads the directory and selection from PROOF_DIR and PROOF_SCENARIOS", () => {
+  const config = configure(
+    { launch, scenarios },
+    { PROOF_DIR: "/ambient", PROOF_SCENARIOS: "b\na" },
+  )
+
+  expect(config.directory).toBe("/ambient")
+  expect(config.scenarios.map((scenario) => scenario.id)).toEqual(["b", "a"])
+})
+
 test("explicit options override environment without mutating it", () => {
-  const env = { NZILA_PROVE_DIR: "/ambient", NZILA_PROVE_SCENARIOS: "missing" }
+  const env = { PROOF_DIR: "/ambient", PROOF_SCENARIOS: "missing" }
   const config = configure({ launch, scenarios, directory: "/explicit", scenarioIds: ["a"] }, env)
 
   expect(config.directory).toBe("/explicit")
   expect(config.scenarios.map((scenario) => scenario.id)).toEqual(["a"])
-  expect(env.NZILA_PROVE_DIR).toBe("/ambient")
+  expect(env.PROOF_DIR).toBe("/ambient")
 })
 
 test("rejects malformed dates and viewports", () => {

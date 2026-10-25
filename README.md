@@ -2,7 +2,7 @@
 
 Replay project-owned Playwright scenarios and leave named screenshots, a video,
 WebVTT chapters, a trace and `manifest.json`. MIT licensed. Bun + TypeScript;
-no dependency on nzila or any other lemol package.
+no dependency on any other lemol package.
 
 The project owns starting and seeding its app and writing its actions. Proof
 owns browser capture and the manifest. It does not retry, heal, compare pixels,
@@ -86,8 +86,8 @@ Run the kit against an existing empty directory:
 
 ```sh
 mkdir proof-output
-NZILA_PROVE_DIR="$PWD/proof-output" \
-NZILA_PROVE_SCENARIOS='browse/open-task' bun proof/run.ts
+PROOF_DIR="$PWD/proof-output" \
+PROOF_SCENARIOS='browse/open-task' bun proof/run.ts
 ```
 
 Scenario ids correspond to project scenario file paths without their extension;
@@ -113,11 +113,11 @@ without importing any of these exports.
 
 | Input | Meaning |
 | --- | --- |
-| `NZILA_PROVE_DIR` | Existing empty directory for all artifacts |
-| `NZILA_PROVE_SCENARIOS` | Scenario ids, one per line; no selection is an error |
+| `PROOF_DIR` | Existing empty directory for all artifacts |
+| `PROOF_SCENARIOS` | Scenario ids, one per line; no selection is an error |
 | `directory`, `scenarioIds` options | Explicit directory and array of ids override those environment variables |
-| `NZILA_PROVE_HEAD` | Caller-owned commit identity; not included in manifest v1 |
-| `NZILA_PROVE_CACHE` | Available to project provisioning; the helper never reads or writes it |
+| `PROOF_HEAD` | Caller-owned commit identity; not included in manifest v1 |
+| `PROOF_CACHE` | Available to project provisioning; the helper never reads or writes it |
 | `executablePath`, `headless` | Explicit browser executable, optional; headless defaults to `true` |
 | `viewport` | Defaults to `{ width: 1280, height: 800 }`; a scenario may override it |
 | `fixedTime` | Fixed browser date, default `2026-01-01T00:00:00.000Z`; timers keep running |

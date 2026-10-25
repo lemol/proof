@@ -62,10 +62,10 @@ export const configure = (
   options: RunOptions,
   env: Readonly<Record<string, string | undefined>> = process.env,
 ) => {
-  const directory = Schema.decodeUnknownSync(Text)(options.directory ?? env.NZILA_PROVE_DIR)
+  const directory = Schema.decodeUnknownSync(Text)(options.directory ?? env.PROOF_DIR)
   const scenarios = selectScenarios(
     options.scenarios,
-    options.scenarioIds ?? env.NZILA_PROVE_SCENARIOS ?? "",
+    options.scenarioIds ?? env.PROOF_SCENARIOS ?? "",
   )
 
   const fixedTime = options.fixedTime ?? "2026-01-01T00:00:00.000Z"

@@ -392,8 +392,8 @@ test("project commands produce 0, 1 and 3; crashes have no completed manifest", 
 
     try {
       const child = await command([process.execPath, join(import.meta.dir, "command.ts"), mode], {
-        NZILA_PROVE_DIR: output.directory,
-        NZILA_PROVE_SCENARIOS: "fixture",
+        PROOF_DIR: output.directory,
+        PROOF_SCENARIOS: "fixture",
         ...(mode === "encoder" ? { PLAYWRIGHT_BROWSERS_PATH: output.directory } : {}),
       })
 
