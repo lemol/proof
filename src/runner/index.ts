@@ -5,7 +5,7 @@ import { chromium, type Browser } from "playwright"
 import { decodeManifest, type ScenarioProof } from "../manifest"
 import { isMissingDisplay, resolveExecutable } from "./browser"
 import { captureScenario } from "./capture"
-import { configure } from "./config"
+import { configure, launchOptions } from "./config"
 import { combineErrors, diagnostic, ProofError } from "./errors"
 import type { RunOptions, RunResult } from "./types"
 
@@ -34,11 +34,7 @@ export const run = async (options: RunOptions): Promise<RunResult> => {
   let browser: Browser
 
   try {
-    browser = await chromium.launch({
-      executablePath,
-      headless: config.headless,
-      timeout: config.timeout,
-    })
+    browser = await chromium.launch(launchOptions(config, executablePath))
   } catch (cause) {
     if (isMissingDisplay(cause)) {
       return { outcome: "skipped", exitCode: 3, reason: diagnostic(cause) }

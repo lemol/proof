@@ -27,6 +27,7 @@ export interface RunOptions {
   readonly scenarioIds?: readonly string[]
   readonly executablePath?: string
   readonly headless?: boolean
+  readonly args?: readonly string[]
   readonly viewport?: { readonly width: number; readonly height: number }
   readonly fixedTime?: string
   readonly locale?: string

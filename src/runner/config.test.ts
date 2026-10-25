@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { selectScenarios, configure } from "./config"
+import { configure, launchOptions, selectScenarios } from "./config"
 
 const actions = [{ name: "open", run: async () => {} }]
 const scenarios = [
@@ -59,4 +59,23 @@ test("rejects malformed dates and viewports", () => {
       {},
     ),
   ).toThrow()
+})
+
+test("passes the given Chromium switches to the launch, and none by default", () => {
+  const options = { launch, scenarios, directory: "/out", scenarioIds: ["a"] }
+  const args = ["--disable-gpu-rasterization", "--force-color-profile=srgb"]
+
+  expect(launchOptions(configure(options, {}), "/chromium")).toEqual({
+    executablePath: "/chromium",
+    headless: true,
+    timeout: 10_000,
+    args: [],
+  })
+  expect(launchOptions(configure({ ...options, args }, {}), "/chromium").args).toEqual(args)
+})
+
+test("rejects a blank Chromium switch", () => {
+  const options = { launch, scenarios, directory: "/out", scenarioIds: ["a"] }
+
+  expect(() => configure({ ...options, args: ["--headless", " "] }, {})).toThrow()
 })

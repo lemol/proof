@@ -119,6 +119,7 @@ without importing any of these exports.
 | `PROOF_HEAD` | Caller-owned commit identity; not included in manifest v1 |
 | `PROOF_CACHE` | Available to project provisioning; the helper never reads or writes it |
 | `executablePath`, `headless` | Explicit browser executable, optional; headless defaults to `true` |
+| `args` | Extra Chromium command-line switches, passed to the launch as given; default none |
 | `viewport` | Defaults to `{ width: 1280, height: 800 }`; a scenario may override it |
 | `fixedTime` | Fixed browser date, default `2026-01-01T00:00:00.000Z`; timers keep running |
 | `locale`, `timezoneId` | Defaults `en-US`, `UTC` |

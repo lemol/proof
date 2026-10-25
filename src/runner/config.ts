@@ -78,6 +78,7 @@ export const configure = (
     scenarios,
     fixedTime,
     headless: options.headless ?? true,
+    args: Schema.decodeUnknownSync(Schema.Array(Text))(options.args ?? []),
     viewport: Schema.decodeUnknownSync(Viewport)(options.viewport ?? { width: 1280, height: 800 }),
     locale: options.locale ?? "en-US",
     timezoneId: options.timezoneId ?? "UTC",
@@ -88,3 +89,10 @@ export const configure = (
 }
 
 export type Configuration = ReturnType<typeof configure>
+
+export const launchOptions = (config: Configuration, executablePath: string) => ({
+  executablePath,
+  headless: config.headless,
+  timeout: config.timeout,
+  args: [...config.args],
+})
