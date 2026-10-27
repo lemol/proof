@@ -13,8 +13,8 @@
   "scripts": {
     "check": "bun run lint && bun run typecheck && bun run test:unit",
     "check:all": "bun run lint && bun run typecheck && bun run test",
-    "lint": "oxfmt --check && oxlint",
-    "fix": "oxlint --fix && oxfmt",
+    "lint": "bun fmt --check && oxlint",
+    "fix": "oxlint --fix && bun fmt",
     "typecheck": "tsc -p tsconfig.json",
     "test": "bun run test:unit && bun run test:slow",
     "test:unit": "bun test src test/boundaries.test.ts",
@@ -27,7 +27,6 @@
     "@stylistic/eslint-plugin": "5.10.0",
     "@types/bun": "1.4.2",
     "effect": "4.0.0",
-    "oxfmt": "0.71.0",
     "oxlint": "1.86.0",
     "playwright": "1.59.0",
     "typescript": "7.0.2"
