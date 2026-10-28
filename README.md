@@ -294,7 +294,7 @@ unknown versions, outcomes and malformed required fields must be rejected.
 bun install --frozen-lockfile
 bun run check       # lint, typecheck, unit tests
 bun run check:all   # also real-browser and process tests
-bun run fix         # oxlint and oxfmt fixes
+bun run fix         # oxlint fixes and bun fmt
 ```
 
 The browser tier requires a browser, Playwright FFmpeg, system `ffmpeg` for frame

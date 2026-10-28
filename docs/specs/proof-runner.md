@@ -10,7 +10,7 @@ start the app, retry actions, compare pixels or publish packages.
 ## Package choices
 
 Use Bun and strict TypeScript with the sibling libraries' compiler flags,
-oxlint, oxfmt and local blank-line rule. Copy the small lint configuration
+oxlint, `bun fmt` and local blank-line rule. Copy the small lint configuration
 into this repo so a lone clone works. Use `bun:test`.
 
 | Package | Role |
@@ -18,7 +18,7 @@ into this repo so a lone clone works. Use `bun:test`.
 | `effect`, exact `4.0.0`, peer + dev | Manifest schemas, typed infrastructure failures, scoped cleanup |
 | `playwright`, peer `>=1.59.0 <2`, exact `1.59.0` dev | Browser library, tracing, screencast and chapter overlays |
 | `sharp`, runtime dependency | Masked PNG capture to lossless WebP on Playwright 1.59 |
-| `@types/bun`, TypeScript, oxlint, oxfmt, `@stylistic/eslint-plugin`, dev | Same tooling family as the sibling libraries |
+| `@types/bun`, TypeScript, oxlint, `@stylistic/eslint-plugin`, dev | Same tooling family as the sibling libraries |
 
 Pin installed versions in this repository's own lockfile. Match sibling
 tooling versions where available. No platform package is needed merely to
