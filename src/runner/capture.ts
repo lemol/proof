@@ -19,6 +19,7 @@ export const captureScenario = async (
   const folder = join(config.directory, prefix)
   const cleanups: (() => Promise<void>)[] = []
   const steps: StepProof[] = []
+  const cues: { action: string; end: number }[] = []
   let primary: { error: unknown } | undefined
   let origin = performance.now()
 
@@ -63,6 +64,12 @@ export const captureScenario = async (
       } finally {
         clearTimeout(timer)
       }
+
+      // Highlight each click, fill and key press and pause before it lands,
+      // so a person watching sees where the action acts.
+      if (config.pace.action > 0) {
+        await page.screencast.showActions({ duration: config.pace.action })
+      }
     }
 
     // Start video first: tracing otherwise establishes an 800px screencast
@@ -76,7 +83,13 @@ export const captureScenario = async (
       try {
         if (scenario.video !== false) {
           await page.screencast.showOverlays()
-          await page.screencast.showChapter(action.name, { duration: 150 })
+
+          if (config.pace.chapter > 0) {
+            await page.screencast.showChapter(action.name, {
+              duration: config.pace.chapter,
+              ...(action.expected !== undefined ? { description: action.expected } : {}),
+            })
+          }
         }
 
         let failure: { error: unknown } | undefined
@@ -121,6 +134,17 @@ export const captureScenario = async (
           ...(failure ? { error: diagnostic(failure.error) } : {}),
         })
 
+        // Hold the captured state on the recording so a person can read it
+        // before the next chapter; the step's chapter ends after the hold.
+        if (scenario.video !== false && config.pace.hold > 0) {
+          await new Promise((resolve) => setTimeout(resolve, config.pace.hold))
+        }
+
+        cues.push({
+          action: action.name,
+          end: Math.max(at, Math.round(performance.now() - origin) / 1000),
+        })
+
         if (failure) break
       } finally {
         await context.tracing.groupEnd()
@@ -142,7 +166,7 @@ export const captureScenario = async (
 
   combineErrors(primary, cleanupErrors)
 
-  if (scenario.video !== false) await writeFile(join(folder, "chapters.vtt"), writeChapters(steps))
+  if (scenario.video !== false) await writeFile(join(folder, "chapters.vtt"), writeChapters(cues))
 
   return {
     id: scenario.id,

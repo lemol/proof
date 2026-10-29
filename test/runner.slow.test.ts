@@ -34,6 +34,9 @@ const scenario: Scenario = {
   ],
 }
 
+// Short enough to keep the tier quick, long enough to measure.
+const pace = { chapter: 300, action: 300, hold: 600 }
+
 const command = async (args: string[], env: Record<string, string | undefined> = {}) => {
   const child = Bun.spawn(args, { env: { ...Bun.env, ...env }, stdout: "pipe", stderr: "pipe" })
   const [stdout, stderr, exitCode] = await Promise.all([
@@ -55,6 +58,7 @@ test("real proofs repeat the same steps and masked WebP screenshots", async () =
       launch: async () => fixture(),
       scenarios: [scenario],
       scenarioIds: [scenario.id],
+      pace,
     }
 
     const a = await run({ ...options, directory: first.directory })
@@ -89,6 +93,26 @@ test("real proofs repeat the same steps and masked WebP screenshots", async () =
     expect((await readFile(join(first.directory, proof.trace!))).subarray(0, 2).toString()).toBe(
       "PK",
     )
+
+    const [open, change] = proof.steps
+
+    // The chapter card plays before the first action; the first result is held,
+    // then the second card plays and the click is highlighted before it lands.
+    expect(open!.at).toBeGreaterThanOrEqual(pace.chapter / 1000)
+    expect(change!.at - open!.at).toBeGreaterThanOrEqual(
+      (pace.hold + pace.chapter + pace.action) / 1000,
+    )
+
+    const ends = [
+      ...(await readFile(join(first.directory, proof.chapters!), "utf8")).matchAll(
+        /--> (\d+):(\d+):(\d+\.\d+)/gu,
+      ),
+    ].map(([, h, m, s]) => Number(h) * 3600 + Number(m) * 60 + Number(s))
+
+    // Each chapter holds its result after the screenshot.
+    expect(ends[0]!).toBeGreaterThanOrEqual(open!.at + pace.hold / 1000)
+    expect(ends[1]!).toBeGreaterThanOrEqual(change!.at + pace.hold / 1000)
+    expect(ends[0]!).toBeLessThanOrEqual(change!.at)
 
     const trace = await command(["unzip", "-p", join(first.directory, proof.trace!), "trace.trace"])
 

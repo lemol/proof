@@ -35,6 +35,11 @@ export interface RunOptions {
   readonly deviceScaleFactor?: number
   readonly colorScheme?: "light" | "dark" | "no-preference"
   readonly timeout?: number
+  readonly pace?: {
+    readonly chapter?: number
+    readonly action?: number
+    readonly hold?: number
+  }
 }
 
 export type RunResult =

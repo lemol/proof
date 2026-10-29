@@ -4,10 +4,13 @@ import type { RunOptions, Scenario } from "./types"
 
 const Text = Schema.String.check(Schema.isPattern(/\S/u))
 const Positive = Schema.Finite.check(Schema.isGreaterThan(0))
+const Milliseconds = Schema.Int.check(Schema.isGreaterThanOrEqualTo(0))
 const Viewport = Schema.Struct({
   width: Schema.Int.check(Schema.isGreaterThan(0)),
   height: Schema.Int.check(Schema.isGreaterThan(0)),
 })
+
+const Pace = Schema.Struct({ chapter: Milliseconds, action: Milliseconds, hold: Milliseconds })
 
 const Definitions = Schema.Array(
   Schema.Struct({
@@ -85,6 +88,12 @@ export const configure = (
     deviceScaleFactor: Schema.decodeUnknownSync(Positive)(options.deviceScaleFactor ?? 1),
     colorScheme: options.colorScheme ?? "light",
     timeout: Schema.decodeUnknownSync(Positive)(options.timeout ?? 10_000),
+    pace: Schema.decodeUnknownSync(Pace)({
+      chapter: 1500,
+      action: 1000,
+      hold: 1500,
+      ...options.pace,
+    }),
   }
 }
 

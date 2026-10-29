@@ -89,7 +89,9 @@ Use fixed defaults for viewport (1280×800), locale (`en-US`), timezone
 browser date (`2026-01-01T00:00:00.000Z`); allow explicit overrides.
 Set the date before the app loads, keeping timers running so waits work.
 Disable animations and hide carets for screenshots. Project actions own
-readiness waits and seeded app data; no arbitrary settling sleeps.
+readiness waits and seeded app data; no arbitrary settling sleeps. The
+recording's `pace` is for the person watching, not readiness: it runs
+only while recording, around actions that have already done their waits.
 
 Prefer an explicitly supplied executable, then installed system Chromium
 or Chrome, then an already installed Playwright Chromium. Do not download
@@ -98,9 +100,12 @@ Missing browser/display is exit 3 with a diagnostic. Browser crashes,
 missing encoding tools, app startup errors and artifact-write failures
 are infrastructure failures, not a claim that nothing can be proved.
 
-Before each action, open a trace group and show its chapter title when
-video is enabled. After it resolves or throws, remove chapter overlays,
-capture the masked screenshot and record its position in the video.
+Before each action, open a trace group and, when video is enabled, show
+its chapter card (its name and `expected`) for `pace.chapter`; input
+actions are highlighted for `pace.action` before they land. After it
+resolves or throws, remove chapter overlays, capture the masked
+screenshot, record its position in the video, then hold that state on
+the recording for `pace.hold`, so a person can follow each step.
 Close trace groups even after failure. Finalize video and trace before
 publishing a manifest.
 
@@ -133,9 +138,10 @@ scenario recording to the post-action screenshot, rounded to milliseconds.
 Offsets are nondecreasing. With no video, `at` is elapsed scenario time
 with the same units, and `video` and `chapters` are both absent.
 
-WebVTT chapter cues use action names in order. Each cue spans the preceding
-capture boundary (zero for the first) through this step's capture offset;
-the screenshot is the state at that chapter's end. Escape cue text, use
+WebVTT chapter cues use action names in order. Each cue starts where the
+preceding one ends (zero for the first) and ends after this step's hold,
+so it spans the card, the action and the held result; the step's capture
+offset falls within it. Escape cue text, use
 valid positive cue durations, and preserve ordering for very fast actions.
 Calibrate offsets to the recording's first frame, not the browser's fixed
 wall clock. Integration tests must check actual recording alignment;

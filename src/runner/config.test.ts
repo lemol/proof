@@ -79,3 +79,21 @@ test("rejects a blank Chromium switch", () => {
 
   expect(() => configure({ ...options, args: ["--headless", " "] }, {})).toThrow()
 })
+
+test("paces the recording for a person to follow, and each part can be turned off", () => {
+  const options = { launch, scenarios, directory: "/out", scenarioIds: ["a"] }
+
+  expect(configure(options, {}).pace).toEqual({ chapter: 1500, action: 1000, hold: 1500 })
+  expect(configure({ ...options, pace: { hold: 0 } }, {}).pace).toEqual({
+    chapter: 1500,
+    action: 1000,
+    hold: 0,
+  })
+})
+
+test("rejects negative or fractional pacing", () => {
+  const options = { launch, scenarios, directory: "/out", scenarioIds: ["a"] }
+
+  expect(() => configure({ ...options, pace: { chapter: -1 } }, {})).toThrow()
+  expect(() => configure({ ...options, pace: { hold: 0.5 } }, {})).toThrow()
+})

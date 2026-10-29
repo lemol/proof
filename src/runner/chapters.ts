@@ -7,14 +7,14 @@ const timestamp = (milliseconds: number): string => {
 }
 
 export const writeChapters = (
-  steps: readonly { readonly action: string; readonly at: number }[],
+  cues: readonly { readonly action: string; readonly end: number }[],
 ): string => {
   let previous = 0
   let result = "WEBVTT\n\n"
 
-  for (const [index, step] of steps.entries()) {
-    const end = Math.max(previous + 1, Math.round(step.at * 1000))
-    const name = step.action
+  for (const [index, cue] of cues.entries()) {
+    const end = Math.max(previous + 1, Math.round(cue.end * 1000))
+    const name = cue.action
       .replace(/&/gu, "&amp;")
       .replace(/</gu, "&lt;")
       .replace(/>/gu, "&gt;")

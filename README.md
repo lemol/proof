@@ -125,6 +125,7 @@ without importing any of these exports.
 | `locale`, `timezoneId` | Defaults `en-US`, `UTC` |
 | `deviceScaleFactor`, `colorScheme` | Defaults `1`, `light` |
 | `timeout` | Playwright operation/navigation timeout in milliseconds, default `10000` |
+| `pace` | Recording pace in milliseconds, so a person can follow the video: `chapter` shows the action's name and `expected` before it runs, `action` highlights each click, fill or key press and pauses before it lands, `hold` keeps each step's captured state on screen. Defaults `{ chapter: 1500, action: 1000, hold: 1500 }`; `0` turns a part off. Scenarios without video are not paced |
 | Scenario `masks` | CSS selectors masked in screenshots |
 | Scenario `video` | Defaults to `true`; `false` omits video and chapters |
 
@@ -194,9 +195,10 @@ and rounded to milliseconds. Video is sampled/encoded at frame precision, not
 millisecond precision. Without video, they are elapsed scenario seconds with
 the same rounding. `video` and `chapters` are either both present or both absent.
 
-Each chapter is named after an action. Its cue starts at the previous screenshot
-boundary (zero for the first) and ends at this step's `at`: the screenshot shows
-the state at that chapter's end. WebVTT text escapes `&`, `<` and `>` and flattens
+Each chapter is named after an action. Its cue starts where the previous one
+ends (zero for the first) and ends after this step's `pace.hold`: it spans the
+chapter card, the action and its captured state held on screen, and this step's
+`at` falls within it. WebVTT text escapes `&`, `<` and `>` and flattens
 line breaks. Cue durations are at least one millisecond; coincident boundaries
 are advanced by one millisecond in the chapter file to retain valid cue ordering.
 The manifest retains its measured offsets.
