@@ -88,6 +88,7 @@ export const configure = (
     deviceScaleFactor: Schema.decodeUnknownSync(Positive)(options.deviceScaleFactor ?? 1),
     colorScheme: options.colorScheme ?? "light",
     timeout: Schema.decodeUnknownSync(Positive)(options.timeout ?? 10_000),
+    closeTimeout: Schema.decodeUnknownSync(Positive)(options.closeTimeout ?? 30_000),
     pace: Schema.decodeUnknownSync(Pace)({
       chapter: 1500,
       action: 1000,

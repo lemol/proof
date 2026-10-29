@@ -1,6 +1,6 @@
 import { constants } from "node:fs"
 import { access, stat } from "node:fs/promises"
-import { chromium } from "playwright"
+import { chromium, type Browser } from "playwright"
 
 const systemPaths = (): string[] => {
   switch (process.platform) {
@@ -57,6 +57,21 @@ export const resolveExecutable = async (
   }
 
   return undefined
+}
+
+export const browserProcessId = async (browser: Browser): Promise<number> => {
+  const session = await browser.newBrowserCDPSession()
+
+  try {
+    const { processInfo } = await session.send("SystemInfo.getProcessInfo")
+    const pid = processInfo.find((info) => info.type === "browser")?.id
+
+    if (pid === undefined) throw new Error("Browser process id is unavailable")
+
+    return pid
+  } finally {
+    await session.detach()
+  }
 }
 
 export const isMissingDisplay = (error: unknown): boolean =>

@@ -91,6 +91,17 @@ test("paces the recording for a person to follow, and each part can be turned of
   })
 })
 
+test("bounds the browser release at 30 seconds by default, and only positively", () => {
+  const options = { launch, scenarios, directory: "/out", scenarioIds: ["a"] }
+
+  expect(configure(options, {}).closeTimeout).toBe(30_000)
+  expect(configure({ ...options, closeTimeout: 2000 }, {}).closeTimeout).toBe(2000)
+
+  for (const closeTimeout of [0, -1, NaN, Infinity]) {
+    expect(() => configure({ ...options, closeTimeout }, {})).toThrow()
+  }
+})
+
 test("rejects negative or fractional pacing", () => {
   const options = { launch, scenarios, directory: "/out", scenarioIds: ["a"] }
 
