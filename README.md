@@ -103,6 +103,21 @@ failure stops that scenario; the remaining selected scenarios still run.
 closes acquired resources on success and failure, including when capture fails.
 A callback that fails before returning its resources must clean them up itself.
 
+### Releasing the browser
+
+After closing the scenarios' contexts and the app, proof gives `browser.close()`
+`closeTimeout` milliseconds (default `30000`). If close has not settled, proof
+checks the browser process: an exited browser counts as released. A live browser
+receives `SIGKILL` (its process group on Unix) and counts as released once it
+exits, with at most another `closeTimeout` milliseconds to wait. An unknown
+process, a failed kill or a browser still alive after that wait rejects at
+`browser cleanup`; no completed manifest is published. A close rejection also
+rejects, rather than turning an incomplete proof into a passing one.
+
+This bounds browser release, not arbitrary project callbacks or capture.
+Cutting release short may leave Playwright's temporary profile directory behind.
+It never retries a scenario or changes its outcome.
+
 ## Options and environment
 
 `run(options)` returns a Promise. `launch` and `scenarios` are required.
@@ -125,6 +140,7 @@ without importing any of these exports.
 | `locale`, `timezoneId` | Defaults `en-US`, `UTC` |
 | `deviceScaleFactor`, `colorScheme` | Defaults `1`, `light` |
 | `timeout` | Playwright operation/navigation timeout in milliseconds, default `10000` |
+| `closeTimeout` | Browser close deadline in milliseconds, default `30000`; a live browser is then killed, with another `closeTimeout` to confirm its exit |
 | `pace` | Recording pace in milliseconds, so a person can follow the video: `chapter` shows the action's name and `expected` before it runs, `action` highlights each click, fill or key press and pauses before it lands, `hold` keeps each step's captured state on screen. Defaults `{ chapter: 1500, action: 1000, hold: 1500 }`; `0` turns a part off. Scenarios without video are not paced |
 | Scenario `masks` | CSS selectors masked in screenshots |
 | Scenario `video` | Defaults to `true`; `false` omits video and chapters |

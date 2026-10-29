@@ -100,6 +100,16 @@ Missing browser/display is exit 3 with a diagnostic. Browser crashes,
 missing encoding tools, app startup errors and artifact-write failures
 are infrastructure failures, not a claim that nothing can be proved.
 
+After contexts and app cleanup, browser release has a `closeTimeout` deadline
+(default 30000 ms): if close has not settled, an exited process is released;
+a live one receives SIGKILL (its Unix process group), with another `closeTimeout`
+to confirm exit, otherwise `browser cleanup` rejects without a manifest.
+This is independent of the capture timeout and never retries a scenario;
+cut-short release may leave temporary profiles behind. Playwright 1.59 waits
+for the child's `close` event, including stdio EOF, even in its kill fallback:
+Chrome descendants holding inherited stdio can prevent that event after Chrome
+exits. Process liveness, rather than that event, decides a cut-short release.
+
 Before each action, open a trace group and, when video is enabled, show
 its chapter card (its name and `expected`) for `pace.chapter`; input
 actions are highlighted for `pace.action` before they land. After it
