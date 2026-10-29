@@ -12,6 +12,119 @@ const browserOptions = process.env.PROOF_TEST_BROWSER
   ? { executablePath: process.env.PROOF_TEST_BROWSER }
   : {}
 
+const browserPid = async (page: Page) => {
+  const session = await page.context().browser()!.newBrowserCDPSession()
+
+  try {
+    const { processInfo } = await session.send("SystemInfo.getProcessInfo")
+
+    return processInfo.find((info) => info.type === "browser")!.id
+  } finally {
+    await session.detach()
+  }
+}
+
+const gone = (pid: number) => {
+  try {
+    process.kill(pid, 0)
+
+    return false
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ESRCH") return true
+
+    throw error
+  }
+}
+
+const stuckRun = async (mode: "exited" | "alive") => {
+  const output = await temporary()
+  let pid = 0
+  let cutAt = 0
+  const stuck: Scenario = {
+    id: "stuck",
+    video: false,
+    actions: [
+      {
+        name: "open",
+        run: async (page) => {
+          await page.goto("/")
+          pid = await browserPid(page)
+
+          const browser = page.context().browser()!
+
+          browser.close = async () => {
+            if (mode === "exited") {
+              process.kill(pid, "SIGKILL")
+
+              while (!gone(pid)) await Bun.sleep(20)
+            }
+
+            cutAt = performance.now()
+            await new Promise<void>(() => {})
+          }
+        },
+      },
+    ],
+  }
+
+  try {
+    const result = await run({
+      ...browserOptions,
+      directory: output.directory,
+      scenarios: [stuck],
+      scenarioIds: [stuck.id],
+      launch: async () => fixture(),
+      closeTimeout: 2000,
+    })
+
+    const elapsed = performance.now() - cutAt
+
+    expect(result.outcome).toBe("passed")
+
+    if (result.outcome === "skipped") throw new Error(result.reason)
+
+    expect(
+      decodeManifest(JSON.parse(await readFile(join(output.directory, "manifest.json"), "utf8"))),
+    ).toEqual(result.manifest)
+    expect(gone(pid)).toBe(true)
+    expect(elapsed).toBeGreaterThanOrEqual(1900)
+    expect(elapsed).toBeLessThan(mode === "exited" ? 5000 : 7000)
+  } finally {
+    if (pid && !gone(pid)) process.kill(pid, "SIGKILL")
+
+    await output.close()
+  }
+}
+
+test("a browser whose close never settles after it exited still publishes the manifest", async () => {
+  await stuckRun("exited")
+}, 20_000)
+
+test("a browser still alive past the close bound is killed and the manifest published", async () => {
+  await stuckRun("alive")
+}, 60_000)
+
+test("a browser that cannot be killed rejects at browser cleanup without a manifest", async () => {
+  const output = await temporary()
+
+  try {
+    const child = await command(
+      [process.execPath, join(import.meta.dir, "command.ts"), "unkillable"],
+      {
+        PROOF_DIR: output.directory,
+        PROOF_SCENARIOS: "fixture",
+      },
+    )
+
+    expect(child.exitCode).toBe(1)
+    expect(child.stderr).toContain("browser cleanup")
+    expect(child.stderr).toContain("is still running 1000 ms after SIGKILL")
+    expect(existsSync(join(output.directory, "manifest.json"))).toBe(false)
+  } finally {
+    await output.close()
+  }
+}, 60_000)
+
 const scenario: Scenario = {
   id: "fixture/change",
   masks: ["#dynamic"],

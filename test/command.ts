@@ -10,11 +10,21 @@ if (mode === "unavailable") {
   mock.module("../src/runner/browser", () => ({
     resolveExecutable: async () => undefined,
     isMissingDisplay: () => false,
+    browserProcessId: async () => {
+      throw new Error("Unavailable browser has no process")
+    },
   }))
+}
+
+if (mode === "unkillable") {
+  const { mock } = await import("bun:test")
+
+  mock.module("../src/runner/process", () => ({ alive: () => true, kill: () => {} }))
 }
 
 const { run } = await import("../src")
 const result = await run({
+  ...(mode === "unkillable" ? { closeTimeout: 1000 } : {}),
   ...(process.env.PROOF_TEST_BROWSER ? { executablePath: process.env.PROOF_TEST_BROWSER } : {}),
   launch: async () => {
     if (mode === "unavailable") throw new Error("Unavailable browser must not launch the app")
@@ -33,6 +43,17 @@ const result = await run({
           expected: "The fixture works",
           run: async (page) => {
             await page.goto("/")
+
+            if (mode === "unkillable") {
+              const browser = page.context().browser()!
+              const close = browser.close.bind(browser)
+
+              browser.close = () => {
+                void close()
+
+                return new Promise<void>(() => {})
+              }
+            }
 
             if (mode === "fail") throw new Error("Fixture expectation failed")
           },

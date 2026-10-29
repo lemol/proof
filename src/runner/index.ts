@@ -3,10 +3,11 @@ import { join } from "node:path"
 import { Effect } from "effect"
 import { chromium, type Browser } from "playwright"
 import { decodeManifest, type ScenarioProof } from "../manifest"
-import { isMissingDisplay, resolveExecutable } from "./browser"
+import { browserProcessId, isMissingDisplay, resolveExecutable } from "./browser"
 import { captureScenario } from "./capture"
 import { configure, launchOptions } from "./config"
 import { combineErrors, diagnostic, ProofError } from "./errors"
+import { releaseBrowser } from "./release"
 import type { RunOptions, RunResult } from "./types"
 
 export type { Action, App, RunOptions, RunResult, Scenario } from "./types"
@@ -65,9 +66,15 @@ export const run = async (options: RunOptions): Promise<RunResult> => {
     proofs = await Effect.runPromise(
       Effect.scoped(
         Effect.gen(function* () {
+          let pid: number | undefined
+
           yield* Effect.acquireRelease(Effect.succeed(browser), (browser) =>
-            release("browser cleanup", () => browser.close()),
+            release("browser cleanup", async () => {
+              await releaseBrowser(() => browser.close(), pid, config.closeTimeout)
+            }),
           )
+
+          pid = yield* attempt("browser process", () => browserProcessId(browser))
 
           const app = yield* Effect.acquireRelease(attempt("app launch", config.launch), (app) =>
             release("app cleanup", () => app.close()),
