@@ -1,6 +1,6 @@
 {
   "name": "@lemol/proof",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Replay Playwright scenarios and write a versioned proof manifest",
   "license": "MIT",
