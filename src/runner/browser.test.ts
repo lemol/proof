@@ -2,7 +2,8 @@ import { expect, test } from "bun:test"
 import { chmod, mkdtemp, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { resolveExecutable, isMissingDisplay } from "./browser"
+import type { Browser } from "playwright"
+import { browserHandleDisposer, resolveExecutable, isMissingDisplay } from "./browser"
 
 test("explicit executable wins, then system, then installed Playwright", async () => {
   const dir = await mkdtemp(join(tmpdir(), "proof-browser-"))
@@ -24,6 +25,50 @@ test("explicit executable wins, then system, then installed Playwright", async (
   } finally {
     await rm(dir, { recursive: true, force: true })
   }
+})
+
+test("cut-short release drops inherited stdio after the dispatcher is disposed", () => {
+  const calls: string[] = []
+  let disposed = false
+  const browser = {
+    _connection: {
+      toImpl: () => {
+        if (disposed) throw new Error("Dispatcher was disposed")
+
+        return {
+          options: {
+            browserProcess: {
+              process: {
+                stdio: [
+                  null,
+                  {
+                    destroy: () => {
+                      calls.push("stdout")
+                    },
+                  },
+                  {
+                    destroy: () => {
+                      calls.push("stderr")
+                    },
+                  },
+                ],
+                unref: () => {
+                  calls.push("unref")
+                },
+              },
+            },
+          },
+        }
+      },
+    },
+  } as unknown as Browser
+
+  const dispose = browserHandleDisposer(browser)
+
+  disposed = true
+  dispose()
+  expect(calls).toEqual(["stdout", "stderr", "unref"])
+  expect(() => browserHandleDisposer({} as Browser)()).not.toThrow()
 })
 
 test("display absence is distinct from browser or encoder crashes", () => {

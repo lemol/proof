@@ -1,11 +1,12 @@
 import { expect, test } from "bun:test"
 import { existsSync } from "node:fs"
-import { readFile, readdir, writeFile } from "node:fs/promises"
+import { chmod, mkdir, readFile, readdir, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import type { Page } from "playwright"
 import sharp from "sharp"
 import { run, type RunOptions, type Scenario } from "../src"
 import { decodeManifest } from "../src/manifest"
+import { resolveExecutable } from "../src/runner/browser"
 import { fixture, temporary } from "./fixture"
 
 const browserOptions = process.env.PROOF_TEST_BROWSER
@@ -121,6 +122,63 @@ test("a browser that cannot be killed rejects at browser cleanup without a manif
     expect(child.stderr).toContain("is still running 1000 ms after SIGKILL")
     expect(existsSync(join(output.directory, "manifest.json"))).toBe(false)
   } finally {
+    await output.close()
+  }
+}, 60_000)
+
+test("inherited browser stdio cannot keep the proof command alive after release", async () => {
+  const output = await temporary()
+  const directory = join(output.directory, "proof")
+  const wrapper = join(output.directory, "chrome")
+  const holder = join(output.directory, "holder")
+
+  try {
+    const executable = await resolveExecutable(browserOptions.executablePath)
+
+    if (!executable) throw new Error("Integration tier requires a browser")
+
+    await mkdir(directory)
+    // Like crashpad/updater, this descendant inherits Chromium's stderr but
+    // outlives it. Graceful Chrome exit must not leave this pipe referenced.
+    await writeFile(
+      wrapper,
+      `#!/bin/sh\nsleep 30 &\necho $! > '${holder}'\nexec '${executable}' "$@"\n`,
+    )
+    await chmod(wrapper, 0o755)
+
+    const child = Bun.spawn([process.execPath, join(import.meta.dir, "command.ts"), "inherited"], {
+      env: {
+        ...Bun.env,
+        PROOF_DIR: directory,
+        PROOF_SCENARIOS: "fixture",
+        PROOF_TEST_BROWSER: wrapper,
+      },
+      stdout: "pipe",
+      stderr: "pipe",
+    })
+
+    const deadline = setTimeout(() => child.kill("SIGKILL"), 25_000)
+    const stderr = new Response(child.stderr).text()
+
+    try {
+      expect(await child.exited).toBe(0)
+      expect(await stderr).toBe("")
+      expect(
+        decodeManifest(JSON.parse(await readFile(join(directory, "manifest.json"), "utf8")))
+          .scenarios[0]!.outcome,
+      ).toBe("passed")
+      expect(gone(Number(await readFile(holder, "utf8")))).toBe(false)
+    } finally {
+      clearTimeout(deadline)
+      child.kill("SIGKILL")
+    }
+  } finally {
+    if (existsSync(holder)) {
+      const pid = Number(await readFile(holder, "utf8"))
+
+      if (!gone(pid)) process.kill(pid, "SIGKILL")
+    }
+
     await output.close()
   }
 }, 60_000)

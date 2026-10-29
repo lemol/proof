@@ -1,3 +1,4 @@
+import type { ChildProcess } from "node:child_process"
 import { constants } from "node:fs"
 import { access, stat } from "node:fs/promises"
 import { chromium, type Browser } from "playwright"
@@ -57,6 +58,48 @@ export const resolveExecutable = async (
   }
 
   return undefined
+}
+
+export const browserHandleDisposer = (browser: Browser): (() => void) => {
+  // Playwright has no public transport disposal API. Restrict this fallback to
+  // a browser whose OS process has already exited. Capture the child now:
+  // Playwright disposes its dispatcher when the CDP transport disconnects.
+  const local = browser as Browser & {
+    _connection?: {
+      toImpl?: (browser: Browser) => {
+        options?: { browserProcess?: { process?: ChildProcess } }
+      }
+    }
+  }
+
+  try {
+    const child = local._connection?.toImpl?.(browser)?.options?.browserProcess?.process
+
+    if (child) {
+      const streams = [...child.stdio]
+
+      return () => {
+        for (const stream of streams) {
+          try {
+            stream?.destroy()
+          } catch {
+            // Still drop other streams and the process reference.
+          }
+        }
+
+        try {
+          child.unref()
+        } catch {
+          // Disposal must not change the already-confirmed release outcome.
+        }
+      }
+    }
+  } catch {
+    // Best effort across Playwright versions; release is decided independently
+    // from OS process liveness, never from this internal path.
+  }
+
+  return () => {}
 }
 
 export const browserProcessId = async (browser: Browser): Promise<number> => {

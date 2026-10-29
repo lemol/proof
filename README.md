@@ -116,6 +116,10 @@ rejects, rather than turning an incomplete proof into a passing one.
 
 This bounds browser release, not arbitrary project callbacks or capture.
 Cutting release short may leave Playwright's temporary profile directory behind.
+After confirming browser exit, proof also drops leftover local stdio handles
+through Playwright's internal `toImpl` connection (verified on 1.59), best-effort
+if that internal layout changes. This prevents inherited pipes from keeping the
+proof command alive; it does not kill unrelated updater/crash-handler processes.
 It never retries a scenario or changes its outcome.
 
 ## Options and environment

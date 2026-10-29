@@ -10,6 +10,7 @@ if (mode === "unavailable") {
   mock.module("../src/runner/browser", () => ({
     resolveExecutable: async () => undefined,
     isMissingDisplay: () => false,
+    browserHandleDisposer: () => () => {},
     browserProcessId: async () => {
       throw new Error("Unavailable browser has no process")
     },
@@ -25,6 +26,7 @@ if (mode === "unkillable") {
 const { run } = await import("../src")
 const result = await run({
   ...(mode === "unkillable" ? { closeTimeout: 1000 } : {}),
+  ...(mode === "inherited" ? { closeTimeout: 15_000 } : {}),
   ...(process.env.PROOF_TEST_BROWSER ? { executablePath: process.env.PROOF_TEST_BROWSER } : {}),
   launch: async () => {
     if (mode === "unavailable") throw new Error("Unavailable browser must not launch the app")

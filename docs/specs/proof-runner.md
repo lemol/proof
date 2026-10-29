@@ -109,6 +109,9 @@ cut-short release may leave temporary profiles behind. Playwright 1.59 waits
 for the child's `close` event, including stdio EOF, even in its kill fallback:
 Chrome descendants holding inherited stdio can prevent that event after Chrome
 exits. Process liveness, rather than that event, decides a cut-short release.
+After confirming exit, drop leftover stdio handles through Playwright's internal
+local `toImpl` connection, best-effort if its layout changes, so inherited pipes
+do not keep the command's event loop alive.
 
 Before each action, open a trace group and, when video is enabled, show
 its chapter card (its name and `expected`) for `pace.chapter`; input
