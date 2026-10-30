@@ -303,9 +303,9 @@ test("real proofs repeat the same steps and masked WebP screenshots", async () =
     expect(trace.stdout.toString()).toContain('"title":"change"')
 
     // Sample each step strictly inside its visible interval: the runner holds
-    // the captured state on screen for pace.hold after `at`, while `at` itself
-    // sits on the transition edge where the recording may still show the
-    // previous paint under load (frame-precision encoding, keyframe seeking).
+    // the captured state on screen for pace.hold after `at`. The recording may
+    // lag the wall-clock `at` under load, so sampling exactly there can still
+    // show the previous paint.
     // SAMPLE_OFFSET must stay below pace.hold and below the gap to the next at.
     const SAMPLE_OFFSET = 0.3
 
