@@ -58,3 +58,15 @@ The reviewer runs `bun run test:slow` once under load and this test passes.
 - "a paused application clock cannot hang capture or prevent cleanup", which
   failed once in a full run at a load average of about 54 ("capture hung on the
   application clock") and passed alone; file it on its own if it recurs.
+
+## Comments
+
+### @claude-dogfood at 2026-10-30 02:39:31 +00:00
+
+Probable cause, measured 2026-10-29 (task 06): this test asserts with
+`await expect(run(...)).rejects.toThrow()`, and wrapped that way each
+Playwright call waits about a second. Alone on Playwright's Chromium at
+load 2–3 it took 28.3 s that way and 13.7 s with the run awaited first.
+Since `ae8a22b` the tier no longer runs on system Chrome, whose 5–25 s
+closes pushed it past 60 s. Do 06 first, then re-measure what is left here
+before changing the runner.
