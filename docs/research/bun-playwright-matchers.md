@@ -250,10 +250,55 @@ not Playwright.** Evidence, all observed on this tree:
   `about:blank` navigation. Effect, sharp, the local server, screenshots,
   tracing, and the CDP stub were each removed without losing the effect.
 
-Not claimed: the implementation mechanism inside Bun (e.g. any nested
-loop). That would need version-matched Bun source evidence, which was not
-gathered. No issue was filed; the file carries everything an upstream
-report needs.
+This report does not establish the mechanism inside Bun from its source. The
+open upstream reports do; see "Upstream status". No new issue was filed,
+because this one is already reported.
+
+## Upstream status
+
+Already reported. Searched 2026-10-30; filing again would be a duplicate.
+
+- [oven-sh/bun#45629](https://github.com/oven-sh/bun/issues/45629) is this
+  bug. It names Playwright's in-process connection as a victim and gives
+  the same settle-first workaround as task 06.
+- [oven-sh/bun#45020](https://github.com/oven-sh/bun/issues/45020) reports
+  the same stall with a dependency-free reproduction, and its test B has
+  the same trigger as ours: an `await` before the matcher.
+- Open fixes, none merged on that date:
+  [#45923](https://github.com/oven-sh/bun/pull/45923) closes both issues;
+  [#45029](https://github.com/oven-sh/bun/pull/45029) closes #45020.
+  [#33289](https://github.com/oven-sh/bun/pull/33289) removes the blocking
+  matcher wait altogether.
+
+Why it is the same bug:
+
+- `playwright-core` 1.59.0 `lib/inProcessFactory.js:46-47` passes every
+  protocol message between client and dispatcher through `setImmediate`,
+  which is the path both issues stall. This also explains the RECV→SEND
+  gaps in ledger row 16.
+- The stall follows the 1 s GC timer that #45020 names as the waker. Two
+  fresh processes per setting on Bun 1.4.4, wall time:
+
+| setting                     | await       | resolves    | rejects     |
+| --------------------------- | ----------- | ----------- | ----------- |
+| default (1 s timer)         | 0.7–1.8 s   | 5.2–6.2 s   | 5.2 s       |
+| `BUN_GC_TIMER_INTERVAL=200` | 0.6–1.4 s   | 2.2–2.3 s   | 2.2–2.3 s   |
+| `BUN_GC_TIMER_DISABLE=1`    | 0.6–0.8 s   | 8.2 s       | 8.2 s       |
+
+With the timer disabled, #45020's reproduction hangs to the test timeout.
+Ours only gets slower, so something else also wakes the loop here.
+
+Cross-version rerun, three fresh processes per mode, all `1 pass`, wall time:
+
+| Bun                      | await       | reject-await | resolves    | rejects     |
+| ------------------------ | ----------- | ------------ | ----------- | ----------- |
+| 1.3.14                   | 0.7–0.9 s   | 0.7–0.8 s    | 1.0 s       | 1.0 s       |
+| 1.4.4                    | 0.7–1.8 s   | 0.6–0.7 s    | 5.2–6.2 s   | 5.2 s       |
+| 1.4.4-canary.1+da867c60b | 0.6–0.8 s   | 0.6–0.7 s    | 5.2 s       | 5.2 s       |
+
+1.4.4 was the latest stable release on that date. On 1.3.14 this reproduction
+is fast, which fits #45020's history: the structure predates 1.4, and the
+stall became about a second long there.
 
 ## Suite inventory
 
@@ -293,8 +338,11 @@ covers `src`/`test` only).
 
 ## Limitations
 
-- One machine, one OS (macOS arm64), one Bun/Playwright pair (1.4.4 /
-  1.59.0). No cross-version or cross-platform campaign was run.
+- Upstream issue: [oven-sh/bun#45629](https://github.com/oven-sh/bun/issues/45629),
+  open on 2026-10-30. See "Upstream status". These results were
+  [added there](https://github.com/oven-sh/bun/issues/45629#issuecomment-6532429811).
+- One machine and one OS (macOS arm64), with Playwright 1.59.0. Bun 1.3.14
+  and a 1.4.4 canary were rerun; no other platform was.
 - Shared-machine load varied during bisection; every load-bearing contrast
   was interleaved back-to-back, and the final 12 runs are stable, but
   absolute wall times will differ elsewhere. Median call time and the
