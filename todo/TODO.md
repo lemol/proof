@@ -4,6 +4,5 @@
 - [ ] [07 - The paused-clock test's watchdog also times the browser's close](./07-the-paused-clock-test-s-watchdog-also-times-the-browser-s.md)
 - [ ] [08 - Reduce Bun's slow expect(promise).rejects over Playwright to a reproduction](./08-reduce-bun-s-slow-expect-promise-rejects-over-playwright-to.md)
 - [ ] [04 - The capture-and-cleanup slow test times out in the full slow tier](./04-the-capture-and-cleanup-slow-test-times-out-in-the-full-slow.md)
-- [ ] [05 - run() hangs after the last scenario under load and never writes the manifest](./05-run-hangs-after-the-last-scenario-under-load-and-never.md)
 
 ## A run shows its work
