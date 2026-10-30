@@ -14,10 +14,13 @@ the attribution with its evidence, and proof's own matcher inventory.
   and ~17 during the experiments. Every pairing below ran back-to-back
   (often interleaved round-robin), and the final file ran 12 fresh processes
   plus side-by-side scratch-vs-final runs, so the split is per-file, not load.
-- In-repo runs go through `bunfig.toml`'s preload (`test/browser.ts`), which
-  only sets `PROOF_TEST_BROWSER` to the installed executable. The
-  reproduction resolves its own executable, so it behaves the same copied
-  alone; the preload does not change the result.
+- The experiments ran in-repo through `bunfig.toml`'s preload
+  (`test/browser.ts`), which only sets `PROOF_TEST_BROWSER` to the installed
+  executable. The reproduction resolves its own executable, so it behaves the
+  same copied alone; the preload does not change the result. `bunfig.toml`
+  now ignores `docs/reproductions/` so a bare `bun test` does not launch
+  Chromium, and the commands below run from that directory, where Bun reads
+  no `bunfig.toml`.
 
 ## Original case
 
@@ -193,13 +196,15 @@ for (const mode of ["await", "resolves", "reject-await", "rejects"] as const) {
 ## Commands
 
 From the repository root (`TMP` redirected so browser artifacts never touch
-the OS default temp; logs land in the attempt directory):
+the OS default temp; logs land in the attempt directory, which must be an
+absolute path):
 
 ```sh
-scratch=<attempt-tmp>; mkdir -p "$scratch"
+scratch=<absolute-attempt-tmp>; mkdir -p "$scratch"
+cd docs/reproductions
 for mode in await resolves reject-await rejects; do
   DEBUG=pw:api TMPDIR="$scratch" TMP="$scratch" TEMP="$scratch" \
-    bun test docs/reproductions/bun-playwright-matchers.test.ts \
+    bun test bun-playwright-matchers.test.ts \
     --timeout 60000 -t "^${mode}\$"
 done
 ```

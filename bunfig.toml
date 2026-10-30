@@ -1,2 +1,5 @@
 [test]
 preload = ["./test/browser.ts"]
+# Keep the upstream reproduction, which launches Chromium, out of a bare
+# `bun test`. Its research doc runs it from its own directory.
+pathIgnorePatterns = ["docs/reproductions/**"]

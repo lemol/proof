@@ -1,5 +1,8 @@
 ---
 title: A bare bun test also runs the docs reproduction and launches Chromium
+group: A run shows its work
+completed_at: 2026-10-30T20:11:34Z
+outcome: completed
 ---
 #### Why
 
