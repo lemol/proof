@@ -302,15 +302,28 @@ test("real proofs repeat the same steps and masked WebP screenshots", async () =
     expect(trace.stdout.toString()).toContain('"title":"open"')
     expect(trace.stdout.toString()).toContain('"title":"change"')
 
+    // Sample each step strictly inside its visible interval: the runner holds
+    // the captured state on screen for pace.hold after `at`, while `at` itself
+    // sits on the transition edge where the recording may still show the
+    // previous paint under load (frame-precision encoding, keyframe seeking).
+    // SAMPLE_OFFSET must stay below pace.hold and below the gap to the next at.
+    const SAMPLE_OFFSET = 0.3
+
     for (const [index, step] of proof.steps.entries()) {
+      const next = proof.steps[index + 1]
+      const sampleAt = Math.min(
+        milliseconds(step.at) / 1000 + SAMPLE_OFFSET,
+        next ? milliseconds(next.at) / 1000 - 0.05 : Number.POSITIVE_INFINITY,
+      )
+
       const frame = await command([
         "ffmpeg",
         "-loglevel",
         "error",
-        "-ss",
-        String(step.at),
         "-i",
         join(first.directory, proof.video!),
+        "-ss",
+        String(sampleAt),
         "-frames:v",
         "1",
         "-f",
