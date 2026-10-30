@@ -107,12 +107,22 @@ A callback that fails before returning its resources must clean them up itself.
 
 After closing the scenarios' contexts and the app, proof gives `browser.close()`
 `closeTimeout` milliseconds (default `30000`). If close has not settled, proof
-checks the browser process: an exited browser counts as released. A live browser
+checks whether the browser exited: it reads the exit state of the child process
+Playwright launched, captured while connected, and never kills a browser whose
+child has reported its exit. Only when that handle is unavailable (Playwright's
+internal `toImpl` path, verified on 1.59) does it fall back to probing the
+browser's pid; that fallback cannot tell the browser from an unrelated process
+that the OS gave the same pid during the wait, so it may `SIGKILL` that process
+or its group. An exited browser counts as released. A live browser
 receives `SIGKILL` (its process group on Unix) and counts as released once it
 exits, with at most another `closeTimeout` milliseconds to wait. An unknown
 process, a failed kill or a browser still alive after that wait rejects at
 `browser cleanup`; no completed manifest is published. A close rejection also
 rejects, rather than turning an incomplete proof into a passing one.
+
+Before the app launches, proof reads the browser's process id over CDP. A run
+whose browser reports none fails at the `browser process` stage, with no app
+launched and no manifest published.
 
 This bounds browser release, not arbitrary project callbacks or capture.
 Cutting release short may leave Playwright's temporary profile directory behind.

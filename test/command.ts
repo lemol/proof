@@ -11,6 +11,7 @@ if (mode === "unavailable") {
     resolveExecutable: async () => undefined,
     isMissingDisplay: () => false,
     browserHandleDisposer: () => () => {},
+    browserExitProbe: () => undefined,
     browserProcessId: async () => {
       throw new Error("Unavailable browser has no process")
     },
@@ -21,6 +22,11 @@ if (mode === "unkillable") {
   const { mock } = await import("bun:test")
 
   mock.module("../src/runner/process", () => ({ alive: () => true, kill: () => {} }))
+
+  // The real close still exits the child, which would now count as released.
+  const browser = await import("../src/runner/browser")
+
+  mock.module("../src/runner/browser", () => ({ ...browser, browserExitProbe: () => () => false }))
 }
 
 const { run } = await import("../src")

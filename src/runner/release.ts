@@ -3,6 +3,8 @@ import { alive, kill } from "./process"
 export interface ProcessControl {
   readonly alive: (pid: number) => boolean
   readonly kill: (pid: number) => void
+  /** Whether the launched child has reported its exit; absent when no handle was captured. */
+  readonly exited?: (() => boolean) | undefined
 }
 
 export type Release = "closed" | "exited" | "killed"
@@ -32,6 +34,9 @@ export const releaseBrowser = async (
     clearTimeout(timer)
   }
 
+  // The child's own exit report outranks the pid, which the OS may have recycled.
+  if (control.exited?.()) return "exited"
+
   if (pid === undefined) {
     throw new Error(`Browser close did not finish within ${bound} ms and its process is unknown`)
   }
@@ -42,7 +47,7 @@ export const releaseBrowser = async (
 
   const end = performance.now() + bound
 
-  while (control.alive(pid)) {
+  while (!control.exited?.() && control.alive(pid)) {
     const remaining = end - performance.now()
 
     if (remaining <= 0) {

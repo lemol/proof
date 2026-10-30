@@ -3,7 +3,12 @@ import { chmod, mkdtemp, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import type { Browser } from "playwright"
-import { browserHandleDisposer, resolveExecutable, isMissingDisplay } from "./browser"
+import {
+  browserExitProbe,
+  browserHandleDisposer,
+  resolveExecutable,
+  isMissingDisplay,
+} from "./browser"
 
 test("explicit executable wins, then system, then installed Playwright", async () => {
   const dir = await mkdtemp(join(tmpdir(), "proof-browser-"))
@@ -75,4 +80,20 @@ test("display absence is distinct from browser or encoder crashes", () => {
   expect(isMissingDisplay(new Error("Missing X server or $DISPLAY"))).toBe(true)
   expect(isMissingDisplay(new Error("Target page, context or browser has been closed"))).toBe(false)
   expect(isMissingDisplay(new Error("ffmpeg executable doesn't exist"))).toBe(false)
+})
+
+test("the exit probe reads the launched child's exit state", () => {
+  const child = { exitCode: null as number | null, signalCode: null as string | null }
+  const browser = {
+    _connection: { toImpl: () => ({ options: { browserProcess: { process: child } } }) },
+  } as unknown as Browser
+
+  const probe = browserExitProbe(browser)
+
+  expect(probe?.()).toBe(false)
+
+  child.signalCode = "SIGKILL"
+
+  expect(probe?.()).toBe(true)
+  expect(browserExitProbe({} as Browser)).toBeUndefined()
 })

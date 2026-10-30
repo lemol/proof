@@ -6,12 +6,14 @@ import { decodeManifest, type ScenarioProof } from "../manifest"
 import {
   browserProcessId,
   browserHandleDisposer,
+  browserExitProbe,
   isMissingDisplay,
   resolveExecutable,
 } from "./browser"
 import { captureScenario } from "./capture"
 import { configure, launchOptions } from "./config"
 import { combineErrors, diagnostic, ProofError } from "./errors"
+import { alive, kill } from "./process"
 import { releaseBrowser } from "./release"
 import type { RunOptions, RunResult } from "./types"
 
@@ -73,10 +75,20 @@ export const run = async (options: RunOptions): Promise<RunResult> => {
         Effect.gen(function* () {
           let pid: number | undefined
           const dropHandles = browserHandleDisposer(browser)
+          const exited = browserExitProbe(browser)
 
           yield* Effect.acquireRelease(Effect.succeed(browser), (browser) =>
             release("browser cleanup", async () => {
-              const released = await releaseBrowser(() => browser.close(), pid, config.closeTimeout)
+              const released = await releaseBrowser(
+                () => browser.close(),
+                pid,
+                config.closeTimeout,
+                {
+                  alive,
+                  kill,
+                  exited,
+                },
+              )
 
               if (released !== "closed") dropHandles()
             }),

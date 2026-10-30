@@ -80,3 +80,36 @@ test("a hung close with no known process fails at the bound", async () => {
     "did not finish within 200 ms",
   )
 })
+
+test("a child that reported its exit is released even when its pid probes alive", async () => {
+  const state = { alive: true, killable: true, kills: [] as number[] }
+  const recycled: ProcessControl = { ...fake(state), exited: () => true }
+
+  expect(await releaseBrowser(never, 4242, 200, recycled)).toBe("exited")
+  expect(state.kills).toEqual([])
+})
+
+test("a child that exits after the kill releases despite a recycled pid", async () => {
+  const state = { alive: true, killable: false, kills: [] as number[] }
+  let exited = false
+  const control: ProcessControl = {
+    alive: () => state.alive,
+    kill: (pid) => {
+      state.kills.push(pid)
+      exited = true
+    },
+    exited: () => exited,
+  }
+
+  expect(await releaseBrowser(never, 4242, 200, control)).toBe("killed")
+  expect(state.kills).toEqual([4242])
+})
+
+test("a child that has not exited is killed through the pid", async () => {
+  const state = { alive: true, killable: true, kills: [] as number[] }
+
+  expect(await releaseBrowser(never, 4242, 200, { ...fake(state), exited: () => false })).toBe(
+    "killed",
+  )
+  expect(state.kills).toEqual([4242])
+})

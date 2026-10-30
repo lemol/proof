@@ -60,10 +60,10 @@ export const resolveExecutable = async (
   return undefined
 }
 
-export const browserHandleDisposer = (browser: Browser): (() => void) => {
-  // Playwright has no public transport disposal API. Restrict this fallback to
-  // a browser whose OS process has already exited. Capture the child now:
-  // Playwright disposes its dispatcher when the CDP transport disconnects.
+// Playwright has no public handle for the browser's OS process. Capture the
+// child it launched while still connected: its dispatcher is disposed when the
+// CDP transport disconnects.
+const launchedChild = (browser: Browser): ChildProcess | undefined => {
   const local = browser as Browser & {
     _connection?: {
       toImpl?: (browser: Browser) => {
@@ -73,9 +73,27 @@ export const browserHandleDisposer = (browser: Browser): (() => void) => {
   }
 
   try {
-    const child = local._connection?.toImpl?.(browser)?.options?.browserProcess?.process
+    return local._connection?.toImpl?.(browser)?.options?.browserProcess?.process
+  } catch {
+    // Best effort across Playwright versions.
+    return undefined
+  }
+}
 
-    if (child) {
+export const browserExitProbe = (browser: Browser): (() => boolean) | undefined => {
+  const child = launchedChild(browser)
+
+  if (!child) return undefined
+
+  return () => child.exitCode !== null || child.signalCode !== null
+}
+
+export const browserHandleDisposer = (browser: Browser): (() => void) => {
+  // Restrict this fallback to a browser whose OS process has already exited.
+  const child = launchedChild(browser)
+
+  if (child) {
+    try {
       const streams = [...child.stdio]
 
       return () => {
@@ -93,10 +111,9 @@ export const browserHandleDisposer = (browser: Browser): (() => void) => {
           // Disposal must not change the already-confirmed release outcome.
         }
       }
+    } catch {
+      // Release is decided independently from this internal path.
     }
-  } catch {
-    // Best effort across Playwright versions; release is decided independently
-    // from OS process liveness, never from this internal path.
   }
 
   return () => {}
