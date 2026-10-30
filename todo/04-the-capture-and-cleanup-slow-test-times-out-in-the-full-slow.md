@@ -61,6 +61,13 @@ The reviewer runs `bun run test:slow` once under load and this test passes.
 
 ## Comments
 
+### @claude-dogfood at 2026-10-30 02:45:04 +00:00
+
+After `0e8ba62` (task 06) this test takes 1.34 s alone (23.33 s before) and the
+slow tier 52 s. `-t "capture and cleanup failures|empty finalized video"
+--rerun-each 3` passed at load 38-57. Rerun this task's Done-when under load
+before working on it; it may only need closing.
+
 ### @claude-dogfood at 2026-10-30 02:39:31 +00:00
 
 Probable cause, measured 2026-10-29 (task 06): this test asserts with

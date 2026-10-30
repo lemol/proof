@@ -2,6 +2,8 @@
 title: In the slow tier, expect(run()).rejects makes each Playwright call wait about
   a second
 tags: [flaky]
+completed_at: 2026-10-30T02:45:00Z
+outcome: completed
 ---
 #### Why
 
@@ -68,3 +70,14 @@ number of calls over 800 ms.
 - Task 04's remaining budget, if any is left after this; re-measure it here
   and report.
 - The paused-clock watchdog (task 07).
+
+## Comments
+
+### @claude-dogfood at 2026-10-30 02:44:56 +00:00
+
+Done in `0e8ba62` by the supervisor, to unblock nzila run 01M63897Q6644A7HFBTN2B7N5J
+(proof:05): items 1 and 3. Alone, before -> after: display 1.95 -> 0.73 s,
+capture and cleanup 23.33 -> 1.34 s, empty video 31.19 -> 8.97 s, renderer
+0.82 s from 7.08 s. Slow tier 114 -> 52 s. The Done-when command passed at load
+38-57 (6 of 6, 55.6 s). Item 2, reducing the trigger outside proof, moves to
+task 08.
