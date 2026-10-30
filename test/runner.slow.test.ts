@@ -8,6 +8,7 @@ import { run, type RunOptions, type Scenario } from "../src"
 import { decodeManifest } from "../src/manifest"
 import { resolveExecutable } from "../src/runner/browser"
 import { fixture, temporary } from "./fixture"
+import { milliseconds } from "./milliseconds"
 
 const browserOptions = process.env.PROOF_TEST_BROWSER
   ? { executablePath: process.env.PROOF_TEST_BROWSER }
@@ -279,21 +280,21 @@ test("real proofs repeat the same steps and masked WebP screenshots", async () =
 
     // The chapter card plays before the first action; the first result is held,
     // then the second card plays and the click is highlighted before it lands.
-    expect(open!.at).toBeGreaterThanOrEqual(pace.chapter / 1000)
-    expect(change!.at - open!.at).toBeGreaterThanOrEqual(
-      (pace.hold + pace.chapter + pace.action) / 1000,
+    expect(milliseconds(open!.at)).toBeGreaterThanOrEqual(pace.chapter)
+    expect(milliseconds(change!.at) - milliseconds(open!.at)).toBeGreaterThanOrEqual(
+      pace.hold + pace.chapter + pace.action,
     )
 
     const ends = [
       ...(await readFile(join(first.directory, proof.chapters!), "utf8")).matchAll(
         /--> (\d+):(\d+):(\d+\.\d+)/gu,
       ),
-    ].map(([, h, m, s]) => Number(h) * 3600 + Number(m) * 60 + Number(s))
+    ].map(([, h, m, s]) => milliseconds(Number(h) * 3600 + Number(m) * 60 + Number(s)))
 
     // Each chapter holds its result after the screenshot.
-    expect(ends[0]!).toBeGreaterThanOrEqual(open!.at + pace.hold / 1000)
-    expect(ends[1]!).toBeGreaterThanOrEqual(change!.at + pace.hold / 1000)
-    expect(ends[0]!).toBeLessThanOrEqual(change!.at)
+    expect(ends[0]!).toBeGreaterThanOrEqual(milliseconds(open!.at) + pace.hold)
+    expect(ends[1]!).toBeGreaterThanOrEqual(milliseconds(change!.at) + pace.hold)
+    expect(ends[0]!).toBeLessThanOrEqual(milliseconds(change!.at))
 
     const trace = await command(["unzip", "-p", join(first.directory, proof.trace!), "trace.trace"])
 
