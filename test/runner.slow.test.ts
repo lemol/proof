@@ -48,6 +48,16 @@ const command = async (args: string[], env: Record<string, string | undefined> =
   return { stdout: Buffer.from(stdout), stderr, exitCode }
 }
 
+// Settle a run before asserting on how it failed: under `expect(run()).rejects`,
+// Bun answers each Playwright call about a second late (task 06).
+const rejection = (proof: Promise<unknown>) =>
+  proof.then(
+    () => {
+      throw new Error("The run resolved; it should have rejected")
+    },
+    (cause: unknown) => cause,
+  )
+
 test("real proofs repeat the same steps and masked WebP screenshots", async () => {
   const first = await temporary()
   const second = await temporary()
@@ -159,17 +169,19 @@ test("app errors mentioning a display are infrastructure failures, never skipped
   const output = await temporary()
 
   try {
-    await expect(
-      run({
-        ...browserOptions,
-        directory: output.directory,
-        scenarios: [scenario],
-        scenarioIds: [scenario.id],
-        launch: async () => {
-          throw new Error("Missing X server or $DISPLAY in app dependency")
-        },
-      }),
-    ).rejects.toThrow()
+    expect(
+      await rejection(
+        run({
+          ...browserOptions,
+          directory: output.directory,
+          scenarios: [scenario],
+          scenarioIds: [scenario.id],
+          launch: async () => {
+            throw new Error("Missing X server or $DISPLAY in app dependency")
+          },
+        }),
+      ),
+    ).toBeInstanceOf(Error)
     expect(existsSync(join(output.directory, "manifest.json"))).toBe(false)
   } finally {
     await output.close()
@@ -378,23 +390,25 @@ test("capture and cleanup failures reject without publishing a completed manifes
     }
 
     try {
-      await expect(
-        run({
-          ...browserOptions,
-          directory: output.directory,
-          scenarios: [broken],
-          scenarioIds: [mode],
-          launch: async () => ({
-            ...app,
-            close: async () => {
-              closed = true
-              await app.close()
+      expect(
+        await rejection(
+          run({
+            ...browserOptions,
+            directory: output.directory,
+            scenarios: [broken],
+            scenarioIds: [mode],
+            launch: async () => ({
+              ...app,
+              close: async () => {
+                closed = true
+                await app.close()
 
-              if (mode === "cleanup") throw new Error("cleanup failed")
-            },
+                if (mode === "cleanup") throw new Error("cleanup failed")
+              },
+            }),
           }),
-        }),
-      ).rejects.toThrow()
+        ),
+      ).toBeInstanceOf(Error)
       expect(closed).toBe(true)
       expect((await readdir(output.directory)).includes("manifest.json")).toBe(false)
     } finally {
@@ -449,25 +463,27 @@ test("an empty finalized video cannot be published as a passing proof", async ()
   const output = await temporary()
 
   try {
-    await expect(
-      run({
-        ...browserOptions,
-        directory: output.directory,
-        scenarios: [scenario],
-        scenarioIds: [scenario.id],
-        launch: async () => {
-          const app = fixture()
+    expect(
+      await rejection(
+        run({
+          ...browserOptions,
+          directory: output.directory,
+          scenarios: [scenario],
+          scenarioIds: [scenario.id],
+          launch: async () => {
+            const app = fixture()
 
-          return {
-            ...app,
-            close: async () => {
-              await app.close()
-              await writeFile(join(output.directory, "scenario-001/video.webm"), "")
-            },
-          }
-        },
-      }),
-    ).rejects.toThrow()
+            return {
+              ...app,
+              close: async () => {
+                await app.close()
+                await writeFile(join(output.directory, "scenario-001/video.webm"), "")
+              },
+            }
+          },
+        }),
+      ),
+    ).toBeInstanceOf(Error)
     expect(existsSync(join(output.directory, "manifest.json"))).toBe(false)
   } finally {
     await output.close()
@@ -493,15 +509,17 @@ test("a renderer failure preserves an already captured screenshot", async () => 
   }
 
   try {
-    await expect(
-      run({
-        ...browserOptions,
-        directory: output.directory,
-        scenarios: [broken],
-        scenarioIds: [broken.id],
-        launch: async () => fixture(),
-      }),
-    ).rejects.toThrow()
+    expect(
+      await rejection(
+        run({
+          ...browserOptions,
+          directory: output.directory,
+          scenarios: [broken],
+          scenarioIds: [broken.id],
+          launch: async () => fixture(),
+        }),
+      ),
+    ).toBeInstanceOf(Error)
     expect(
       (await sharp(join(output.directory, "scenario-001/step-001.webp")).metadata()).format,
     ).toBe("webp")
