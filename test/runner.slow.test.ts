@@ -581,6 +581,7 @@ test("capture and cleanup failures reject without publishing a completed manifes
     const output = await temporary()
     const app = fixture()
     let closed = false
+    const started = performance.now()
     const broken: Scenario = {
       id: mode,
       video: false,
@@ -619,6 +620,9 @@ test("capture and cleanup failures reject without publishing a completed manifes
       expect(closed).toBe(true)
       expect((await readdir(output.directory)).includes("manifest.json")).toBe(false)
     } finally {
+      console.log(
+        `proof-timing mode=${mode} ms=${Math.round(performance.now() - started)} budget=60000`,
+      )
       await app.close()
       await output.close()
     }
