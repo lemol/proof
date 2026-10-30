@@ -11,8 +11,8 @@ is awaited first. The slow tier works around it since 06's commit. What
 triggers it is not known: a bare `cat` echo over fd 3/4 inside
 `expect(...).rejects` slowed only from 7 ms to 23 ms for 10 round trips,
 and a plain Playwright launch-and-close under `bun test` was fast. Without
-a reproduction it cannot be reported upstream, and other suites (xonton's
-kit tests, nzila's) may be paying the same second per call.
+a reproduction it cannot be reported upstream, and other suites that drive
+a browser from `bun test` may be paying the same second per call.
 
 #### What to build
 
@@ -23,13 +23,15 @@ kit tests, nzila's) may be paying the same second per call.
 2. Say whether it is Bun's (`expect().rejects` / `.resolves` running a
    nested loop) or Playwright's, and write the reproduction as a single
    file an upstream issue can carry. Do not file the issue; the person does.
-3. Search the workspace's other suites for `expect(` over a promise that
-   drives a browser or a child process, and list them.
+3. Search proof's own suites for `expect(` over a promise that drives a
+   browser or a child process, and list them. proof is a public library:
+   name no other repository in anything committed here.
 
 #### Done when
 
 - The report has the reproduction, its timings with and without the
   wrapper, and the list from item 3.
+- No committed file names another repository.
 
 #### Out of scope
 
