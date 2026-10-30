@@ -369,6 +369,11 @@ test("a paused application clock cannot hang capture or prevent cleanup", async 
     signalPaused = resolve
   })
 
+  let signalClosing: () => void = () => {}
+  const appClosing = new Promise<void>((resolve) => {
+    signalClosing = resolve
+  })
+
   const paused: Scenario = {
     id: "paused",
     video: false,
@@ -380,6 +385,15 @@ test("a paused application clock cannot hang capture or prevent cleanup", async 
           await current.goto("/")
           await current.clock.pauseAt("2026-01-01T00:00:01.000Z")
           signalPaused()
+
+          // A slow graceful close, as a system Chrome's can be, is cleanup
+          // after capture: the watchdog must not time it.
+          const browser = current.context().browser()!
+          const close = browser.close.bind(browser)
+
+          browser.close = async () => {
+            await Promise.all([close(), Bun.sleep(6000)])
+          }
         },
       },
     ],
@@ -397,6 +411,7 @@ test("a paused application clock cannot hang capture or prevent cleanup", async 
         ...app,
         close: async () => {
           closed = true
+          signalClosing()
           await app.close()
         },
       }
@@ -412,12 +427,19 @@ test("a paused application clock cannot hang capture or prevent cleanup", async 
       }),
     ])
 
-    const result = await Promise.race([
+    // Capture is over once the app's close is called; the browser's close
+    // follows it and is covered by the test's timeout, not this watchdog.
+    await Promise.race([
+      appClosing,
       proof,
       new Promise<never>((_, reject) => {
         timer = setTimeout(() => reject(new Error("capture hung on the application clock")), 5000)
       }),
     ])
+
+    clearTimeout(timer)
+
+    const result = await proof
 
     expect(result.outcome).toBe("passed")
     expect(closed).toBe(true)
@@ -427,7 +449,7 @@ test("a paused application clock cannot hang capture or prevent cleanup", async 
     await proof.catch(() => {})
     await output.close()
   }
-}, 15_000)
+}, 60_000)
 
 test("a failed action preserves evidence, stops its scenario and continues in a fresh context", async () => {
   const output = await temporary()
