@@ -301,7 +301,8 @@ bun run fix         # oxlint fixes and bun fmt
 
 The browser tier requires a browser, Playwright FFmpeg, system `ffmpeg` for frame
 extraction, and `unzip` for inspecting trace groups. It fails when these are
-missing. `PROOF_TEST_BROWSER` selects a specific executable for that tier. CI
+missing. The tier runs on Playwright's installed Chromium, not a system Chrome
+(`test/browser.ts`); `PROOF_TEST_BROWSER` selects another executable. CI
 provisions these explicitly and checks the oldest supported Playwright version.
 The standalone lockfile installs from a lone clone; workspace installs belong
 to the workspace root.
