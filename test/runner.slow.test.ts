@@ -576,6 +576,9 @@ test("configuration and nonempty output fail before the app launches", async () 
   }
 })
 
+// Under CPU pressure the two modes took 31.015 + 31.430 = 62.445 s:
+// each launches a browser whose legitimate release can use the 30 s close bound.
+// Allow more than twice that measured total, without shortening runner cleanup.
 test("capture and cleanup failures reject without publishing a completed manifest", async () => {
   for (const mode of ["capture", "cleanup"] as const) {
     const output = await temporary()
@@ -621,13 +624,13 @@ test("capture and cleanup failures reject without publishing a completed manifes
       expect((await readdir(output.directory)).includes("manifest.json")).toBe(false)
     } finally {
       console.log(
-        `proof-timing mode=${mode} ms=${Math.round(performance.now() - started)} budget=60000`,
+        `proof-timing mode=${mode} ms=${Math.round(performance.now() - started)} budget=150000`,
       )
       await app.close()
       await output.close()
     }
   }
-}, 60_000)
+}, 150_000)
 
 test("project commands produce 0, 1 and 3; crashes have no completed manifest", async () => {
   for (const [mode, expected] of [
